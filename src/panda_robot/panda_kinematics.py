@@ -33,12 +33,14 @@ from copy import deepcopy
 from .utils.kdl_parser import kdl_tree_from_urdf_model
 from urdf_parser_py.urdf import URDF
 
+
 def kdl_to_mat(data):
-    mat =  np.mat(np.zeros((data.rows(), data.columns())))
+    mat = np.mat(np.zeros((data.rows(), data.columns())))
     for i in range(data.rows()):
         for j in range(data.columns()):
-            mat[i,j] = data[i,j]
+            mat[i, j] = data[i, j]
     return mat
+
 
 class PandaKinematics(object):
     """
@@ -75,9 +77,9 @@ class PandaKinematics(object):
             for c in additional_segment_config:
                 q = quaternion.from_rotation_matrix(c["origin_ori"]).tolist()
                 kdl_origin_frame = PyKDL.Frame(PyKDL.Rotation.Quaternion(q.x, q.y, q.z, q.w),
-                                             PyKDL.Vector(*(c["origin_pos"].tolist())))
+                                               PyKDL.Vector(*(c["origin_pos"].tolist())))
                 kdl_sgm = PyKDL.Segment(c["child_name"], PyKDL.Joint(c["joint_name"]),
-                                      kdl_origin_frame, PyKDL.RigidBodyInertia())
+                                        kdl_origin_frame, PyKDL.RigidBodyInertia())
                 self._kdl_tree.addSegment(
                     kdl_sgm, c["parent_name"])
 
@@ -142,12 +144,13 @@ class PandaKinematics(object):
                 pos_array[idx] = pos_list[name]
 
         if type_ == 'velocities':
-            kdl_array = PyKDL.JntArrayVel(pos_array, kdl_array) # ----- using different constructor for getting velocity fk
+            kdl_array = PyKDL.JntArrayVel(pos_array,
+                                          kdl_array)  # ----- using different constructor for getting velocity fk
         return kdl_array
 
-    def forward_position_kinematics(self,joint_values=None):
+    def forward_position_kinematics(self, joint_values=None):
         end_frame = PyKDL.Frame()
-        self._fk_p_kdl.JntToCart(self.joints_to_kdl('positions',joint_values),
+        self._fk_p_kdl.JntToCart(self.joints_to_kdl('positions', joint_values),
                                  end_frame)
         pos = end_frame.p
         rot = PyKDL.Rotation(end_frame.M)
@@ -155,9 +158,9 @@ class PandaKinematics(object):
         return np.array([pos[0], pos[1], pos[2],
                          rot[0], rot[1], rot[2], rot[3]])
 
-    def forward_velocity_kinematics(self,joint_velocities=None):
+    def forward_velocity_kinematics(self, joint_velocities=None):
         end_frame = PyKDL.FrameVel()
-        self._fk_v_kdl.JntToCart(self.joints_to_kdl('velocities',joint_velocities),
+        self._fk_v_kdl.JntToCart(self.joints_to_kdl('velocities', joint_velocities),
                                  end_frame)
         return end_frame.GetTwist()
 
@@ -190,40 +193,38 @@ class PandaKinematics(object):
         else:
             return None
 
-    def jacobian(self,joint_values=None):
+    def jacobian(self, joint_values=None):
         jacobian = PyKDL.Jacobian(self._num_jnts)
-        self._jac_kdl.JntToJac(self.joints_to_kdl('positions',joint_values), jacobian)
+        self._jac_kdl.JntToJac(self.joints_to_kdl('positions', joint_values), jacobian)
         return kdl_to_mat(jacobian)
 
-    def jacobian_transpose(self,joint_values=None):
+    def jacobian_transpose(self, joint_values=None):
         return self.jacobian(joint_values).T
 
-    def jacobian_pseudo_inverse(self,joint_values=None):
+    def jacobian_pseudo_inverse(self, joint_values=None):
         return np.linalg.pinv(self.jacobian(joint_values))
 
-
-    def inertia(self,joint_values=None):
+    def inertia(self, joint_values=None):
         inertia = PyKDL.JntSpaceInertiaMatrix(self._num_jnts)
-        self._dyn_kdl.JntToMass(self.joints_to_kdl('positions',joint_values), inertia)
+        self._dyn_kdl.JntToMass(self.joints_to_kdl('positions', joint_values), inertia)
         return kdl_to_mat(inertia)
 
-    def cart_inertia(self,joint_values=None):
+    def cart_inertia(self, joint_values=None):
         js_inertia = self.inertia(joint_values)
         jacobian = self.jacobian(joint_values)
         return np.linalg.inv(jacobian * np.linalg.inv(js_inertia) * jacobian.T)
 
 
 if __name__ == '__main__':
-    
+
     rospy.init_node('test')
 
     from panda_robot import PandaArm
+
     r = PandaArm()
     # print r.has_gripper
     # kin = PandaKinematics(r)
     kin = r._kinematics
-
-
 
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
@@ -235,11 +236,11 @@ if __name__ == '__main__':
         print("-----------------")
         print("")
         # print jacobian
-        print(kin.forward_position_kinematics()) # ee positions from kdl
+        print(kin.forward_position_kinematics())  # ee positions from kdl
         # print kin.forward_velocity_kinematics()
         print("")
 
-        print(r._cartesian_pose) # ee positions from robot directly
+        print(r._cartesian_pose)  # ee positions from robot directly
         # print r._cartesian_velocity
         print("-----------------")
         print("-----------------")
@@ -247,5 +248,3 @@ if __name__ == '__main__':
 
         # break
         rate.sleep()
-
-    

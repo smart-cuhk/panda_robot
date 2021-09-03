@@ -12,7 +12,7 @@
 # /***************************************************************************
 # Copyright (c) 2019-2021, Saif Sidhik
 # Copyright (c) 2013-2018, Rethink Robotics Inc.
- 
+
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -40,7 +40,7 @@ Use your dev machine's keyboard to control robot end-effector position.
 
 Each key corresponds to increasing or decreasing the angle
 of a joint on the robot arm. For ease, use the numeral keys in the
-numberpad of the keyboard.
+number pad of the keyboard.
 
 :info:
     Demo showing low-level position control using Franka ROS Interface.
@@ -59,6 +59,8 @@ numberpad of the keyboard.
 """
 
 pos_increment = 0.01
+
+
 # ori_increment = 0.001
 def map_keyboard():
     """
@@ -87,6 +89,7 @@ def map_keyboard():
                 limb.get_gripper().open()
             elif action == "calibrate":
                 limb.get_gripper().calibrate()
+
     def reset_robot(args):
         limb.untuck()
 
@@ -98,19 +101,22 @@ def map_keyboard():
         '7': (set_ee_target, ['position', np.asarray([0, 0, pos_increment])], "z increase"),
         '4': (set_ee_target, ['position', np.asarray([0, 0, -pos_increment])], "z decrease"),
         'r': (reset_robot, [None], "reset to neutral pose")
-     }
+    }
     if has_gripper:
         bindings.update({
-        '8': (set_g, "close", "close gripper"),
-        '9': (set_g, "open", "open gripper"),
-        'i': (set_g, "calibrate", "calibrate gripper")
+            '8': (set_g, "close", "close gripper"),
+            '9': (set_g, "open", "open gripper"),
+            'i': (set_g, "calibrate", "calibrate gripper")
         })
     done = False
-    rospy.logwarn("Controlling end-effector position. Press ? for help, Esc to quit. For ease, use the numeral keys in the numberpad of the keyboard.\n\nWARNING: The motion will be slightly jerky!!\n")
+    rospy.logwarn(
+        "Controlling end-effector position. Press ? for help, Esc to quit. "
+        "For ease, use the numeral keys in the number pad of the keyboard.\n\n"
+        "WARNING: The motion will be slightly jerky!!\n")
     while not done and not rospy.is_shutdown():
         c = getch()
         if c:
-            #catch Esc or ctrl-c
+            # catch Esc or ctrl-c
             if c in ['\x1b', '\x03']:
                 done = True
                 rospy.signal_shutdown("Example finished.")
@@ -120,16 +126,16 @@ def map_keyboard():
                     cmd[0](cmd[1])
                     print("command: %s" % (cmd[2],))
                 else:
-                    #expand binding to something like "set_j(right, 'j0', 0.1)"
+                    # expand binding to something like "set_j(right, 'j0', 0.1)"
                     cmd[0](*cmd[1])
                     print("command: %s" % (cmd[2],))
             else:
                 print("key bindings: ")
                 print("  Esc: Quit")
                 print("  ?: Help")
-                for key, val in sorted(viewitems(bindings),
-                                       key=lambda x: x[1][2]):
+                for key, val in sorted(viewitems(bindings), key=lambda x: x[1][2]):
                     print("  %s: %s" % (key, val[2]))
+
 
 def main():
     """Panda Robot IK Example: End-effector Keyboard Control
@@ -152,6 +158,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
